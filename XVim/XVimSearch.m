@@ -548,7 +548,22 @@
 {
     NSTextView* srcView = [window sourceView];
 
-    [srcView insertText:self.lastReplacementString replacementRange:self.lastFoundRange];
+    NSString *textToReplace = [[srcView string] substringWithRange:self.lastFoundRange];
+    NSString *replacementString = self.lastReplacementString;
+    NSArray *splitsOnEscapedAmpersands = [replacementString componentsSeparatedByString:@"\\&"];
+    NSMutableArray *stringsToJoin = [[NSMutableArray alloc] init];
+    
+    for (NSString* stringWithoutEscapedAmpersands in splitsOnEscapedAmpersands) {
+        NSArray *splitsOnAmpersands = [stringWithoutEscapedAmpersands componentsSeparatedByString:@"&"];
+        NSString *springsWithMatch = [splitsOnAmpersands componentsJoinedByString:textToReplace];
+        [stringsToJoin addObject:springsWithMatch];
+    }
+    
+    if ([stringsToJoin count] > 0) {
+        replacementString = [stringsToJoin componentsJoinedByString:@"\\&"];
+    }
+    
+    [srcView insertText:replacementString replacementRange:self.lastFoundRange];
     [srcView xvim_moveCursor:self.lastFoundRange.location + self.lastReplacementString.length preserveColumn:NO];
     self.numReplacements++;
 
